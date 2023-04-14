@@ -19,7 +19,7 @@ async def say_hello(name: str):
 if __name__ == '__main__':
     import uvicorn
 
-    origins = ['http://localhost:8000', 'http://192.168.137.1:8000']
+    origins = ['http://localhost:8000', 'http://tuIP:8000']
 
     app.add_middleware(
         CORSMiddleware,
