@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 import random
-import uvicorn
 
 from starlette.middleware.cors import CORSMiddleware
 
@@ -20,9 +19,10 @@ async def obtenerDatosModulo(id: str):
     return {"temperatura": str(random.randint(1, 50)),"ruido":str(random.randint(1, 90)),"bares":str(random.randint(900, 1500))}
 
 
-if __name__ == '_main_':
+if __name__ == '__main__':
+    import uvicorn
 
-    origins = ['http://0.0.0.0:8888', 'http://informatica.iesalbarregas.com:8888']
+    origins = ['http://localhost:8000', 'TuURL']
 
     app.add_middleware(
         CORSMiddleware,
@@ -31,4 +31,4 @@ if __name__ == '_main_':
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    uvicorn.run(app, host='0.0.0.0', port=8888)
+    uvicorn.run(app, host='0.0.0.0', port=8000)
