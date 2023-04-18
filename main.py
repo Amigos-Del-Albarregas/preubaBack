@@ -1,25 +1,33 @@
 from fastapi import FastAPI
 import random
+import uvicorn
 
 from starlette.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
 
-@app.get("/obtenerMierda")
+@app.get("/")
 async def root():
-    return {"temperatura": str(random.randint(1, 50)),"ruido":str(random.randint(1, 90)),"bares":str(random.randint(900, 1500))}
+    return {"temperatura": str(random.randint(1, 50)), "ruido": str(random.randint(1, 90)),
+            "bares": str(random.randint(900, 1500))}
 
 
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
+@app.get("/obtenerDatosGenerales")
+async def obtenerDatosGenerales():
+    return {"temperatura": str(random.randint(1, 50)), "ruido": str(random.randint(1, 90)),
+            "bares": str(random.randint(900, 1500))}
+
+
+@app.get("/obtenerDatosModulo/{id}")
+async def obtenerDatosModulo(id: str):
+    return {"temperatura": str(random.randint(1, 50)), "ruido": str(random.randint(1, 90)),
+            "bares": str(random.randint(900, 1500))}
 
 
 if __name__ == '__main__':
-    import uvicorn
 
-    origins = ['http://localhost:8000', 'http://192.168.137.1:8000']
+    origins = ['http://0.0.0.0:8888', 'añadirAquiTuURL']
 
     app.add_middleware(
         CORSMiddleware,
@@ -28,4 +36,4 @@ if __name__ == '__main__':
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    uvicorn.run(app, host='0.0.0.0', port=8000)
+    uvicorn.run(app, host='0.0.0.0', port=8888)
