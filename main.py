@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 import random
 import mysql.connector
+from pydantic import BaseModel
+from pydantic.schema import datetime
 
 from starlette.middleware.cors import CORSMiddleware
 from kafka import KafkaConsumer
@@ -63,13 +65,18 @@ app = FastAPI()
 
 mydb = mysql.connector.connect(
     host="127.0.0.1",
-    user="nombre",
-    password="pass",
-    database="nombreDB"
+    user="root",
+    password="admin",
+    database="smartclassroommonitor"
 )
 
 data = {"id": 1, "nombre": "John Doe", "activo": True}
 
+
+class User(BaseModel):
+    nombre: str
+    token: str
+    rol: int
 
 @app.get("/")
 async def root():
@@ -93,6 +100,21 @@ async def obtenerModulos():
 
     return results
 
+@app.get("/obtenerRol")
+async def obtenerRol():
+    mycursor = mydb.cursor()
+    query = "SELECT * FROM rol"
+    mycursor.execute(query)
+    results = []
+    for row in mycursor.fetchall():
+        results.append({
+            'id': row[0],
+            'nombre': row[1]
+        })
+    mycursor.close()
+
+    return results
+
 @app.get("/obtenerDatosGenerales")
 async def obtenerDatosGenerales():
     return {"temperatura": recibirDatosTemperatura(),"ruido":recibirDatosRuido(),"humedad": recibirDatosHumedad(), "luminosidad": recibirDatosLuminosidad()}
@@ -108,6 +130,22 @@ async def cambiarAula(aulaSel: str):
     aula = aulaSel
     cambiarAula()
 
+
+@app.post("/crearUsuario")
+async def crearUsuario(user: User):
+    result = False
+    mycursor = mydb.cursor()
+    query = "INSERT INTO user (nombre, token, date_last_signUp, rol) VALUES (%s, %s, %s, %s)"
+    values = (user.nombre, user.token, datetime.now(), user.rol)
+    mycursor.execute(query, values)
+    mydb.commit()
+    if mycursor.rowcount > 0:
+        result = True
+    else:
+        result = False
+    mycursor.close()
+
+    return result
 
 
 if __name__ == '__main__':
