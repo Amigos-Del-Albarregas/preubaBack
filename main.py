@@ -7,19 +7,24 @@ from pydantic.schema import datetime
 from starlette.middleware.cors import CORSMiddleware
 from kafka import KafkaConsumer
 from json import loads
+import json
+
 
 aulaSel = "ateca"
-consumerHumedad =None
-consumerRuido =None
-consumerTemperatura =None
-consumerLuminosidad =None
 
 def cambiarAula():
+    global consumerHumedad
+    global consumerRuido
+    global consumerTemperatura
+    global consumerLuminosidad
+    global aulaSel
+
+
     consumerHumedad = KafkaConsumer(
-        'humedadAULA'+aulaSel,
-        enable_auto_commit=True,
-        value_deserializer=lambda m: loads(m.decode('utf-8')),
-        bootstrap_servers=['172.17.10.33:9092', '172.17.10.34:9092', '172.17.10.35:9092'])
+            'humedadAULA'+aulaSel,
+            enable_auto_commit=True,
+            value_deserializer=lambda m: loads(m.decode('utf-8')),
+            bootstrap_servers=['172.17.10.33:9092', '172.17.10.34:9092', '172.17.10.35:9092'])
 
     consumerRuido = KafkaConsumer(
         'ruidoAULA'+aulaSel,
@@ -40,6 +45,7 @@ def cambiarAula():
         bootstrap_servers=['172.17.10.33:9092', '172.17.10.34:9092', '172.17.10.35:9092'])
 
 def obtenerPayload(data: str):
+    data = json.dumps(data)
     start_index = data.find("'payload':") + len("'payload':")
     end_index = data.find(",", start_index)
     return data[start_index:end_index].strip().replace(',', '.')
@@ -48,11 +54,9 @@ def obtenerPayload(data: str):
 def recibirDatosHumedad():
     for m in consumerHumedad:
         return obtenerPayload(str(m.value))
-
 def recibirDatosRuido():
     for m in consumerRuido:
         return obtenerPayload(str(m.value))
-
 def recibirDatosTemperatura():
     for m in consumerTemperatura:
         return obtenerPayload(eval(str(m.value)))
@@ -61,16 +65,16 @@ def recibirDatosLuminosidad():
         return obtenerPayload(str(m.value))
 
 cambiarAula()
+
 app = FastAPI()
 
 mydb = mysql.connector.connect(
-    host="127.0.0.1",
-    user="root",
-    password="admin",
-    database="smartclassroommonitor"
+    host="172.17.10.30",
+    user="android",
+    password="android",
+    database="android"
 )
 
-data = {"id": 1, "nombre": "John Doe", "activo": True}
 
 
 class User(BaseModel):
@@ -119,15 +123,10 @@ async def obtenerRol():
 async def obtenerDatosGenerales():
     return {"temperatura": recibirDatosTemperatura(),"ruido":recibirDatosRuido(),"humedad": recibirDatosHumedad(), "luminosidad": recibirDatosLuminosidad()}
 
-
-# @app.get("/obtenerDatosModulo/{id}")
-# async def obtenerDatosModulo(id: str):
-#     return {"temperatura": recibirDatosTemperatura(), "ruido": recibirDatosRuido(), "humedad": recibirDatosHumedad(),
-#             "luminosidad": recibirDatosLuminosidad()}
-
-@app.get("/cambiarAula")
-async def cambiarAula(aulaSel: str):
-    aula = aulaSel
+@app.get("/cambiarAula/{aula}")
+async def cambiar_aula(aula: str):
+    global aulaSel
+    aulaSel = aula
     cambiarAula()
 
 
@@ -148,7 +147,7 @@ async def crearUsuario(user: User):
     return result
 
 
-if __name__ == '__main__':
+if __name__ ==  '__main__':
     import uvicorn
 
     origins = ['http://localhost:8000', 'http://informatica.iesalbarregas.com:8888']
